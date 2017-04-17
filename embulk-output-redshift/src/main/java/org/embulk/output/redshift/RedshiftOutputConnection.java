@@ -279,8 +279,9 @@ public class RedshiftOutputConnection
           quoteIdentifierString(sb, insertKey);
           sb.append(" > ");
           sb.append(" ( ");
-          sb.append(" SELECT max(");
+          sb.append(" SELECT COALESCE(MAX(");
           quoteIdentifierString(sb, insertKey);
+          sb.append("), '0001-01-01' ");
           sb.append(") FROM ");
           quoteIdentifierString(sb, toTable);
           sb.append(" WHERE ");
