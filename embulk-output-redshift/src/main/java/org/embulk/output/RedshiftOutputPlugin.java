@@ -83,6 +83,9 @@ public class RedshiftOutputPlugin
         @Config("encrypt_key")
         @ConfigDefault("\"\"")
         public String getEncryptKey();
+        @Config("insert_key")
+        @ConfigDefault("\"\"")
+        public String getInsertKey();
     }
 
     @Override
@@ -141,7 +144,7 @@ public class RedshiftOutputPlugin
         logger.info("Connecting to {} options {}", url, props);
         props.setProperty("password", t.getPassword());
 
-        return new RedshiftOutputConnector(url, props, t.getSchema());
+        return new RedshiftOutputConnector(url, props, t.getSchema(), t.getInsertKey());
     }
 
     private static AWSCredentialsProvider getAWSCredentialsProvider(RedshiftPluginTask task)
@@ -172,7 +175,6 @@ public class RedshiftOutputPlugin
         RedshiftPluginTask t = (RedshiftPluginTask) task;
         setAWSCredentialsBackwardCompatibility(t);
         return new RedshiftCopyBatchInsert(getConnector(task, true),
-                getAWSCredentialsProvider(t), t.getS3Bucket(), t.getS3Region(), t.getS3KeyPrefix(), t.getIamUserName(), t.getEncryptOption(), t.getEncryptKey());
-        
+               getAWSCredentialsProvider(t), t.getS3Bucket(), t.getS3Region(), t.getS3KeyPrefix(), t.getIamUserName(), t.getEncryptOption(), t.getEncryptKey());
     }
 }

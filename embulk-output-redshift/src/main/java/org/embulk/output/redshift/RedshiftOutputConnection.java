@@ -19,12 +19,22 @@ public class RedshiftOutputConnection
         extends JdbcOutputConnection
 {
     private final Logger logger = Exec.getLogger(RedshiftOutputConnection.class);
+    private final String insertKey;
 
     public RedshiftOutputConnection(Connection connection, String schemaName, boolean autoCommit)
             throws SQLException
     {
         super(connection, schemaName);
         connection.setAutoCommit(autoCommit);
+        insertKey = "";
+    }
+
+    public RedshiftOutputConnection(Connection connection, String schemaName, boolean autoCommit, String insertKey)
+            throws SQLException
+    {
+        super(connection, schemaName);
+        connection.setAutoCommit(autoCommit);
+        this.insertKey = insertKey;
     }
 
     // Redshift does not support DROP TABLE IF EXISTS.
@@ -232,5 +242,55 @@ public class RedshiftOutputConnection
         return sb.toString();
 
     }
+  
+    @Override
+    protected String buildCollectInsertSql(List<String> fromTables, JdbcSchema schema, String toTable)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("INSERT INTO ");
+        quoteIdentifierString(sb, toTable);
+        sb.append(" (");
+        for (int i=0; i < schema.getCount(); i++) {
+            if (i != 0) { sb.append(", "); }
+            quoteIdentifierString(sb, schema.getColumnName(i));
+        }
+        sb.append(") ");
+        sb.append("SELECT ");
+        for (int j=0; j < schema.getCount(); j++) {
+          if (j != 0) { sb.append(", "); }
+          quoteIdentifierString(sb, schema.getColumnName(j));
+        }
+        sb.append(" FROM ( ");
+        for (int i=0; i < fromTables.size(); i++) {
+            if (i != 0) { sb.append(" UNION ALL "); }
+            sb.append("SELECT ");
+            for (int j=0; j < schema.getCount(); j++) {
+                if (j != 0) { sb.append(", "); }
+                quoteIdentifierString(sb, schema.getColumnName(j));
+            }
+            sb.append(" FROM ");
+            quoteIdentifierString(sb, fromTables.get(i));
+            
+        }
+        sb.append(" ) ");
+        if(insertKey != null && !insertKey.equals("")){
+          sb.append(" WHERE ");
+          quoteIdentifierString(sb, insertKey);
+          sb.append(" > ");
+          sb.append(" ( ");
+          sb.append(" SELECT max(");
+          quoteIdentifierString(sb, insertKey);
+          sb.append(") FROM ");
+          quoteIdentifierString(sb, toTable);
+          sb.append(" WHERE ");
+          quoteIdentifierString(sb, insertKey);
+          sb.append(" > DATE( DATEADD(HOURS, -24 * 7 + 9, GETDATE()) )");
+          sb.append(" ) ");
+        }
+
+        return sb.toString();
+    }
+
 
 }

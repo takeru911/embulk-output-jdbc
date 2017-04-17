@@ -15,12 +15,20 @@ public class RedshiftOutputConnector
     private final String url;
     private final Properties properties;
     private final String schemaName;
+    private final String insertKey;
 
     public RedshiftOutputConnector(String url, Properties properties, String schemaName)
     {
+        this(url, properties, schemaName, "");        
+    }
+
+    public RedshiftOutputConnector(String url, Properties properties, String schemaName, String insertKey)
+    {
+
         this.url = url;
         this.properties = properties;
-        this.schemaName = schemaName;
+        this.schemaName = schemaName;        
+        this.insertKey = insertKey;
     }
 
     @Override
@@ -28,7 +36,7 @@ public class RedshiftOutputConnector
     {
         Connection c = driver.connect(url, properties);
         try {
-            RedshiftOutputConnection con = new RedshiftOutputConnection(c, schemaName, autoCommit);
+            RedshiftOutputConnection con = new RedshiftOutputConnection(c, schemaName, autoCommit, insertKey);
             c = null;
             return con;
         } finally {
