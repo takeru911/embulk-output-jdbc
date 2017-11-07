@@ -4,6 +4,7 @@ import java.util.Properties;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import com.google.common.base.Throwables;
 import org.embulk.output.jdbc.MergeConfig;
 import org.slf4j.Logger;
 import com.google.common.base.Optional;
@@ -29,12 +30,16 @@ public class RedshiftOutputPlugin
 
     public interface RedshiftPluginTask extends AwsCredentialsTaskWithPrefix, PluginTask
     {
-        @Config("host")
-        public String getHost();
 
-        @Config("port")
-        @ConfigDefault("5439")
-        public int getPort();
+        @Config("url")
+        public String getUrl();
+
+        @Config("driver_path")
+        @ConfigDefault("null")
+        public Optional<String> getDriverPath();
+
+        @Config("driver_class")
+        public String getDriverClass();
 
         @Config("user")
         public String getUser();
@@ -106,9 +111,11 @@ public class RedshiftOutputPlugin
     {
         RedshiftPluginTask t = (RedshiftPluginTask) task;
 
-        String url = String.format("jdbc:postgresql://%s:%d/%s",
-                t.getHost(), t.getPort(), t.getDatabase());
-
+        String url = t.getUrl();
+        String driverClass = t.getDriverClass();
+        if (t.getDriverPath().isPresent()) {
+            loadDriverJar(t.getDriverPath().get());
+        }
         Properties props = new Properties();
         props.setProperty("loginTimeout",   "300"); // seconds
         props.setProperty("socketTimeout", "1800"); // seconds
@@ -141,8 +148,7 @@ public class RedshiftOutputPlugin
         props.setProperty("user", t.getUser());
         logger.info("Connecting to {} options {}", url, props);
         props.setProperty("password", t.getPassword());
-
-        return new RedshiftOutputConnector(url, props, t.getSchema());
+        return new RedshiftOutputConnector(url, props, t.getSchema(), driverClass);
     }
 
     private static AWSCredentialsProvider getAWSCredentialsProvider(RedshiftPluginTask task)
