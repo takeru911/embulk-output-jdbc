@@ -72,7 +72,7 @@ public class RedshiftCopyBatchInsert
     public static final String COPY_AFTER_FROM = "GZIP DELIMITER '\\t' NULL '\\\\N' TRUNCATECOLUMNS ACCEPTINVCHARS";
 
     public RedshiftCopyBatchInsert(RedshiftOutputConnector connector,
-            AWSCredentialsProvider credentialsProvider, String s3BucketName, String s3RegionName, String s3KeyPrefix,
+            AWSCredentialsProvider credentialsProvider, String s3BucketName, String s3RegionName, String s3KeyPrefix, String s3Endpoint,
             String iamReaderUserName, EncryptOption encryptOption, String encryptKey) throws IOException, SQLException
     {
         super();
@@ -96,6 +96,7 @@ public class RedshiftCopyBatchInsert
         clientConfiguration.setSignerOverride("AWSS3V4SignerType");            
         this.s3 = new AmazonS3Client(credentialsProvider, clientConfiguration);
         s3.setRegion(RegionUtils.getRegion(s3RegionName));
+        s3.setEndpoint(s3Endpoint);
     }
 
     @Override
