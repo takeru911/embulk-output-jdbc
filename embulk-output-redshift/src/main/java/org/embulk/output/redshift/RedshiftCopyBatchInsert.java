@@ -324,7 +324,7 @@ public class RedshiftCopyBatchInsert
             sb.append(s3BucketName);
             sb.append("/");
             sb.append(s3KeyName);
-            sb.append("' CREDENTIALS '");
+            sb.append("' \nCREDENTIALS '");
             sb.append("aws_access_key_id=");
             sb.append(creds.getAWSAccessKeyId());
             sb.append(";aws_secret_access_key=");
