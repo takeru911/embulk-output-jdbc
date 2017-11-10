@@ -92,6 +92,13 @@ public class RedshiftOutputPlugin
         @Config("encrypt_key")
         @ConfigDefault("\"\"")
         public String getEncryptKey();
+
+        @Config("apply_gzip")
+        public String getApplyGzip();
+
+        @Config("copy_after_from")
+        @ConfigDefault("\"DELIMITER '\\t' NULL '\\\\N' TRUNCATECOLUMNS ACCEPTINVCHARS\"")
+        public String getCopyAfterFrom();
     }
 
     @Override
@@ -193,7 +200,7 @@ public class RedshiftOutputPlugin
         RedshiftPluginTask t = (RedshiftPluginTask) task;
         setAWSCredentialsBackwardCompatibility(t);
         return new RedshiftCopyBatchInsert(getConnector(task, true),
-                getAWSCredentialsProvider(t), t.getS3Bucket(), t.getS3Region(), t.getS3KeyPrefix(), t.getS3EndPoint(),t.getIamUserName(), t.getEncryptOption(), t.getEncryptKey());
+                getAWSCredentialsProvider(t), t.getS3Bucket(), t.getS3Region(), t.getS3KeyPrefix(), t.getS3EndPoint(),t.getIamUserName(), t.getEncryptOption(), t.getEncryptKey(), Boolean.parseBoolean(t.getApplyGzip()), t.getCopyAfterFrom());
         
     }
 }

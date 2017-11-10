@@ -63,6 +63,8 @@ public class RedshiftCopyBatchInsert
     private RedshiftOutputConnection connection = null;
     private String copySqlBeforeFrom = null;
     private String encryptKey;
+    private String copyAfterFrom;
+    private boolean applyGzip;
     private long totalRows;
     private int fileCount;
     private EncryptOption encryptOption;
@@ -73,7 +75,7 @@ public class RedshiftCopyBatchInsert
 
     public RedshiftCopyBatchInsert(RedshiftOutputConnector connector,
             AWSCredentialsProvider credentialsProvider, String s3BucketName, String s3RegionName, String s3KeyPrefix, String s3Endpoint,
-            String iamReaderUserName, EncryptOption encryptOption, String encryptKey) throws IOException, SQLException
+            String iamReaderUserName, EncryptOption encryptOption, String encryptKey, boolean applyGzip, String copyAfterFrom ) throws IOException, SQLException
     {
         super();
         this.connector = connector;
@@ -88,10 +90,13 @@ public class RedshiftCopyBatchInsert
         this.credentialsProvider = credentialsProvider;
         this.encryptOption = encryptOption;
         this.encryptKey = encryptKey;
+        this.applyGzip = applyGzip;
+        this.copyAfterFrom = copyAfterFrom;
         this.sts = new AWSSecurityTokenServiceClient(credentialsProvider);  // options
         this.executorService = Executors.newCachedThreadPool();
         this.uploadAndCopyFutures = new ArrayList<Future<Void>>();
-
+        System.out.println(copyAfterFrom);
+        System.out.println(COPY_AFTER_FROM);
         ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.setSignerOverride("AWSS3V4SignerType");            
         this.s3 = new AmazonS3Client(credentialsProvider, clientConfiguration);
@@ -110,12 +115,21 @@ public class RedshiftCopyBatchInsert
     @Override
     protected BufferedWriter openWriter(File newFile) throws IOException
     {
-        // Redshift supports gzip
+
+        if(applyGzip){
+            // Redshift supports gzip
+            return new BufferedWriter(
+                    new OutputStreamWriter(
+                            new GZIPOutputStream(new FileOutputStream(newFile)),
+                            FILE_CHARSET)
+            );
+        }
         return new BufferedWriter(
                 new OutputStreamWriter(
-                    new GZIPOutputStream(new FileOutputStream(newFile)),
-                    FILE_CHARSET)
-                );
+                        new FileOutputStream(newFile),
+                        FILE_CHARSET)
+        );
+
     }
 
     @Override
