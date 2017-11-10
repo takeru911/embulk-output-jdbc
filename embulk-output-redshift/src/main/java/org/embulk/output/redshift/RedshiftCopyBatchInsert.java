@@ -334,11 +334,11 @@ public class RedshiftCopyBatchInsert
                 sb.append(creds.getSessionToken());
             }
             sb.append("' ");
-            if (s3RegionName != null) {
+            /*if (s3RegionName != null) {
                 sb.append("REGION '");
                 sb.append(s3RegionName);
                 sb.append("' ");
-            }
+            }*/
 
             sb.append(COPY_AFTER_FROM);
             return sb.toString();
